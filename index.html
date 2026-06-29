@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MX Caption Generator</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MX-CAP">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root{ --bg:#000; --card:#1A1A1A; --line:#2A2A2A; --accent:#CCFF00; --txt:#FFF; --sub:#888; --good:#00C853;
+    --emozione:#FF8C00; --autoironia:#00E5FF; --umorismo:#CCFF00; --esperienza:#00FFB2; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  body{max-width:480px; margin:0 auto; padding:22px 16px 48px; min-height:100vh;}
+  .eyebrow{font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--sub); font-weight:700;}
+  h1{font-size:30px; font-weight:800; letter-spacing:-.01em; margin:6px 0 2px; line-height:1;}
+  h1 span{color:var(--accent);}
+  .lede{color:var(--sub); font-size:13px; margin:0 0 22px; line-height:1.4;}
+
+  .counter{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:18px;}
+  .counter .row{display:flex; align-items:baseline; justify-content:space-between;}
+  .counter .num{font-size:34px; font-weight:800; line-height:1;}
+  .counter .num b{color:var(--accent);}
+  .counter .num small{color:var(--sub); font-size:18px; font-weight:700;}
+  .counter .lbl{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--sub); font-weight:700;}
+  .bar{height:6px; background:#000; border-radius:99px; margin-top:12px; overflow:hidden;}
+  .bar i{display:block; height:100%; background:var(--accent); border-radius:99px; transition:width .35s ease;}
+
+  .sect{font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--sub); font-weight:700; margin:0 0 10px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .chip{background:var(--card); border:1px solid var(--line); color:var(--txt);
+    border-radius:8px; padding:9px 13px; font-size:14px; font-weight:600; cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s;}
+  .chip.active{background:var(--accent); color:#000; border-color:var(--accent);}
+  .chip.add{color:var(--accent); border-style:dashed;}
+
+  .search{position:relative; margin-bottom:10px;}
+  .search input{width:100%; background:#000; border:1px solid var(--line); color:var(--txt);
+    border-radius:10px; padding:12px 13px; font-size:15px; outline:none;}
+  .search input:focus-visible{border-color:var(--accent);}
+  .sugg{margin-top:6px; border:1px solid var(--line); border-radius:10px; overflow:hidden; display:none;}
+  .sugg.show{display:block;}
+  .sugg div{padding:11px 13px; cursor:pointer; border-bottom:1px solid var(--line); font-size:14px;}
+  .sugg div:last-child{border-bottom:none;}
+  .sugg div:active{background:#000;}
+  .sugg .pn{font-weight:600;}
+  .sugg .pt{color:var(--accent); font-size:12px; margin-left:6px;}
+  .sugg .pc{color:var(--sub); font-size:12px;}
+  .sugg .none{color:var(--sub); cursor:default;}
+
+  .selbox{display:none; background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:13px 15px; margin-bottom:6px; align-items:center; justify-content:space-between; gap:10px;}
+  .selbox.show{display:flex;}
+  .selbox .info{min-width:0;}
+  .selbox .pn{font-weight:700; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .selbox .pt{color:var(--accent); font-size:13px; margin-top:2px;}
+  .selbox .pt.nd{color:var(--sub);}
+  .save{flex-shrink:0; background:#000; border:1px solid var(--line); color:var(--accent);
+    border-radius:9px; padding:9px 12px; font-size:13px; font-weight:700; cursor:pointer;}
+  .save.done{color:var(--sub); border-color:var(--line);}
+
+  .cta{width:100%; margin:20px 0 0; border:none; border-radius:20px; padding:18px;
+    background:var(--accent); color:#000; font-size:17px; font-weight:800; cursor:pointer;
+    transition:transform .08s, opacity .15s;}
+  .cta:active{transform:scale(.985);}
+  .cta:disabled{background:var(--card); color:var(--sub); border:1px solid var(--line); cursor:not-allowed;}
+
+  .out{margin-top:22px; display:none;}
+  .out.show{display:block; animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .badge{display:inline-block; font-size:10px; letter-spacing:.12em; text-transform:uppercase; font-weight:800;
+    padding:5px 10px; border-radius:8px; color:#000; margin-bottom:9px;}
+  textarea{width:100%; min-height:250px; resize:vertical; background:var(--card);
+    border:1px solid var(--line); border-radius:16px; color:var(--txt); padding:16px;
+    font-size:15px; line-height:1.5; font-family:inherit; outline:none;}
+  .acts{display:flex; gap:8px; margin-top:10px;}
+  .acts button{flex:1; border-radius:14px; padding:15px; font-size:15px; font-weight:700; cursor:pointer; border:1px solid var(--line);}
+  .skip{background:var(--card); color:var(--txt);}
+  .skip:disabled{color:var(--sub); opacity:.5; cursor:not-allowed;}
+  .copy{background:var(--card); color:var(--accent);}
+  .copy.done{background:var(--good); color:#000; border-color:var(--good);}
+
+  .hist{margin-top:24px; display:none;}
+  .hist.show{display:block;}
+  .hist .htop{display:flex; align-items:center; justify-content:space-between; cursor:pointer;}
+  .hist .tally{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px;}
+  .hist .tally span{font-size:11px; font-weight:700; padding:4px 8px; border-radius:7px; background:var(--card); border:1px solid var(--line);}
+  .hist ul{list-style:none; margin:10px 0 0; padding:0; display:none;}
+  .hist ul.open{display:block;}
+  .hist li{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:8px;}
+  .hist li .meta{display:flex; align-items:center; gap:8px; margin-bottom:5px;}
+  .hist li .dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .hist li .cat{font-size:10px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; color:var(--sub);}
+  .hist li .dt{font-size:11px; color:var(--sub); margin-left:auto;}
+  .hist li .tx{font-size:13px; color:#ccc; line-height:1.4;}
+  .hist .arrow{color:var(--sub); font-size:13px;}
+
+  .foot{margin-top:26px; display:flex; justify-content:center;}
+  .reset{background:none; border:none; color:var(--sub); font-size:13px; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
+  .hint{color:var(--sub); font-size:13px; text-align:center; margin-top:14px; min-height:16px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important;}}
+</style>
+</head>
+<body>
+  <div class="eyebrow">MX Content</div>
+  <h1>Caption <span>Generator</span></h1>
+  <p class="lede">Scrivi la pista, il tag compare da solo. Genera, skippa quelle che non ti piacciono, copia quella giusta. Il conteggio scala solo quando copi.</p>
+
+  <div class="counter">
+    <div class="row">
+      <div class="num"><b id="free">0</b><small id="tot">/0</small></div>
+      <div class="lbl">caption libere</div>
+    </div>
+    <div class="bar"><i id="bar" style="width:100%"></i></div>
+  </div>
+
+  <p class="sect">Pista</p>
+  <div class="chips" id="chips"></div>
+  <div class="search" id="searchWrap" style="display:none">
+    <input id="q" type="text" placeholder="Scrivi il nome della pista..." autocomplete="off">
+    <div class="sugg" id="sugg"></div>
+  </div>
+  <div class="selbox" id="selbox">
+    <div class="info">
+      <div class="pn" id="selName">-</div>
+      <div class="pt" id="selTag">-</div>
+    </div>
+    <button class="save" id="saveBtn">Salva</button>
+  </div>
+
+  <button class="cta" id="gen" disabled>Genera caption</button>
+
+  <div class="out" id="out">
+    <span class="badge" id="badge">-</span>
+    <textarea id="text" readonly></textarea>
+    <div class="acts">
+      <button class="skip" id="skip">Skippa</button>
+      <button class="copy" id="copy">Copia</button>
+    </div>
+  </div>
+
+  <div class="hist" id="hist">
+    <div class="htop" id="histTop">
+      <p class="sect" style="margin:0">Storico <span id="histName"></span> &middot; <span id="histN">0</span></p>
+      <span class="arrow" id="histArrow">mostra &#9662;</span>
+    </div>
+    <div class="tally" id="tally"></div>
+    <ul id="histList"></ul>
+  </div>
+
+  <p class="hint" id="hint"></p>
+  <div class="foot"><button class="reset" id="reset">Azzera e ricomincia il giro</button></div>
+
+<script>
+const CAPS = [{"c": "emozione", "t": "Il motocross è tutto in questi quindici secondi: cuore a mille e testa completamente vuota. 🔥 Anche voi lo cercate questo brivido?"}, {"c": "emozione", "t": "Ci sono giri di motocross che ti restano addosso per ore, e questo è uno di quelli. ⚡ Vi capita di scendere dalla moto con l'adrenalina ancora a mille?"}, {"c": "emozione", "t": "Niente come il motocross per sentirti vivo davvero: apri il gas e all'improvviso esiste solo la pista davanti. 🏍️ Mi capite?"}, {"c": "emozione", "t": "Ho ancora le mani che tremano dopo questo giro. 😅 Ditemi che non sono l'unico a cui il motocross fa questo effetto"}, {"c": "emozione", "t": "Paura e divertimento nello stesso identico secondo: per me il motocross è esattamente questo. 😬 Vi ci ritrovate?"}, {"c": "emozione", "t": "Quando il motore spinge e il battito va alla stessa frequenza capisci perché ami il motocross. 🔊 Come ve la godete voi una sparata così?"}, {"c": "emozione", "t": "Sono sceso con le gambe ancora molli: altro che palestra, una sessione di motocross è un'altra storia. 😮‍💨 A voi succede uguale?"}, {"c": "emozione", "t": "L'adrenalina del motocross non te la spiega nessuno, la devi provare. Oggi l'ho cercata e l'ho trovata tutta. 🔥 Sapete di cosa parlo?"}, {"c": "emozione", "t": "Bastano pochi metri per dimenticarti tutto il resto: ecco perché il motocross per me è una droga. ⚡ Lo provate anche voi?"}, {"c": "emozione", "t": "Il motocross ti svuota la testa in un secondo e te la riempie di pura adrenalina. Oggi è stata perfetta. 🏍️ Lo sentite anche voi?"}, {"c": "emozione", "t": "C'è un attimo, prima di buttarti, in cui senti solo il cuore: il motocross vive tutto lì. 😬 Lo conoscete quel momento?"}, {"c": "emozione", "t": "Ho ancora il cuore a mille mentre carico questo video: il motocross mi lascia sempre così. 🔥 E a voi fa lo stesso effetto?"}, {"c": "emozione", "t": "Quando apro il gas non penso più a niente, ed è la cosa più bella del motocross. 🤍 Capite cosa intendo?"}, {"c": "emozione", "t": "Pochi sport ti danno la scarica del motocross, e oggi ne ho fatto il pieno. ⚡ Voi dove la trovate questa sensazione?"}, {"c": "emozione", "t": "Il motocross ti tiene sul filo per tutto il giro, e oggi non ho mai mollato. 😬 Vi piace stare su quel filo?"}, {"c": "emozione", "t": "Adrenalina, terra e motore: il motocross per me è questa miscela qui, e oggi era perfetta. 🔥 La cercate anche voi?"}, {"c": "emozione", "t": "Mi sono giocato tutto in quei secondi e il cuore se li ricorda ancora uno per uno. ❤️‍🔥 Il motocross vi fa lo stesso effetto?"}, {"c": "emozione", "t": "Niente mi accende come una sessione di motocross tirata: oggi sono uscito completamente carico. ⚡ E voi come vi sentite dopo un giro così?"}, {"c": "emozione", "t": "Il motocross ti regala secondi in cui ci siete solo tu, la moto e la pista davanti. 🏍️ Li conoscete anche voi?"}, {"c": "emozione", "t": "C'è quella scarica che cerco tutta la settimana e la trovo solo nel motocross. 🔥 Voi quando la sentite?"}, {"c": "autoironia", "t": "Nella mia testa guidavo come Cairoli, poi ho rivisto il video del motocross e mi sono ricordato di essere solo un amatore. 😂 A voi è mai successo?"}, {"c": "autoironia", "t": "Lo stile è tutto da rivedere, ma il divertimento non si discute: è il bello di fare motocross da amatore. 😎 Mi capite?"}, {"c": "autoironia", "t": "Il talento l'ho lasciato a casa, ma il sorriso me lo sono portato tutto in pista: il motocross dell'amatore felice. 😁 Chi è messo come me?"}, {"c": "autoironia", "t": "Non sono velocissimo, sono solo molto convinto, e nel motocross conta anche quello no? 😅 Voi che scusa usate?"}, {"c": "autoironia", "t": "Ogni volta giuro che rallento e ogni volta apro di più: il motocross mi frega sempre. 🫠 Solo a me?"}, {"c": "autoironia", "t": "Cadere fa parte del gioco, continuo a ripetermelo da solo: la vita da amatore del motocross è anche questo. 🙃 Quante ne avete azzeccate oggi?"}, {"c": "autoironia", "t": "Mi do un quattro di stile e un dieci di faccia tosta, ma il motocross mi perdona perché mi diverto. 😂 Vi riconoscete?"}, {"c": "autoironia", "t": "Ho riguardato il video convinto di essere stato un fenomeno del motocross. Spoiler: no. 😂 A voi com'è andata oggi?"}, {"c": "autoironia", "t": "Pro per mezzo secondo, poi mi sono ricordato che lunedì torno in ufficio: il motocross resta il mio momento da eroe. 😅 E il vostro?"}, {"c": "autoironia", "t": "La verità è che nel motocross sbaglio ancora un sacco di cose, ma mi diverto come un matto. 🏍️ Meglio veloci o felici secondo voi?"}, {"c": "autoironia", "t": "Avrei potuto frenare prima, \"avrei\": il motocross mi insegna sempre qualcosa, di solito troppo tardi. 🙃 Vi ci ritrovate?"}, {"c": "autoironia", "t": "Il mio fisioterapista non ama la mia passione per il motocross, io invece sì. 😎 Quanti acciacchi vi portate a casa voi?"}, {"c": "autoironia", "t": "Ho passato più tempo a rialzare la moto che a guidarla, ma il motocross è anche questo. 😂 Vi è capitata una giornata così?"}, {"c": "autoironia", "t": "Lo so che si vedeva la paura, ma giuro che mi stavo divertendo da matti: il bello del motocross amatoriale. 😅 Vi succede uguale?"}, {"c": "autoironia", "t": "Da fuori sembro tranquillo, dentro al casco è tutto un \"oddio oddio oddio\": il motocross sincero. 😂 Solo io?"}, {"c": "umorismo", "t": "Il motocross mi distrugge gli avambracci ogni volta, e oggi è stato anche peggio. 😂 A voi le spacca così le braccia?"}, {"c": "umorismo", "t": "La parte difficile del motocross non è la pista, è spiegare a casa perché sono tornato di nuovo pieno di fango. 🤷 Solo a me?"}, {"c": "umorismo", "t": "Avevo detto \"solo un giro veloce\" e tre ore dopo ero ancora lì: il motocross è una trappola, lo sappiamo. 😅 A voi quanto dura un giro veloce?"}, {"c": "umorismo", "t": "Gli amici mi chiamano per il mare e io me ne sto qui a mangiare polvere, felice come una Pasqua: viva il motocross. 😄 E voi, mare o moto?"}, {"c": "umorismo", "t": "Il lunedì in ufficio sono già con la testa al prossimo giro di motocross. 🤫 Ditemi che non sono l'unico a lavorare sognando la pista"}, {"c": "umorismo", "t": "Il motocross è la mia terapia, e guardando le spese costa pure come una terapia. 🤣💸 Voi che ne pensate?"}, {"c": "umorismo", "t": "Mia moglie dice che amo più la moto di lei: il motocross crea questi piccoli problemi. 😅 Solo a me?"}, {"c": "umorismo", "t": "Più tempo a pulire la moto che a guidarla: nessuno ti avvisa di questo quando inizi col motocross. 🧽 Vi ci ritrovate?"}, {"c": "umorismo", "t": "Ho un lavoro serio, lo giuro, poi arriva il weekend e penso solo al motocross. 🏍️ Doppia vita pure voi?"}, {"c": "umorismo", "t": "Il motocross mi chiama più forte della sveglia del lunedì, e di solito rispondo prima a lui. 📞 Vi capita?"}, {"c": "umorismo", "t": "Il meteo diceva pioggia e sono andato lo stesso, perché il motocross non aspetta il sole. 🌧️ Voi rinuncereste o no?"}, {"c": "umorismo", "t": "Il mio meccanico ormai mi conosce meglio del dentista, e questo la dice lunga sul mio motocross. 🔧 Anche voi di casa dal meccanico?"}, {"c": "umorismo", "t": "Tornare a casa pieno di fango è il mio modo di dire \"che bella giornata\": il motocross parla questa lingua. 😄 Mi capite?"}, {"c": "umorismo", "t": "Avevo promesso un'uscita tranquilla e sono tornato che sembravo reduce da una guerra: il motocross e le sue promesse. 😂 Solo io?"}, {"c": "umorismo", "t": "La cosa più costosa del motocross non sono le gomme, sono le scuse che invento a casa. 🤣 Quante ne avete preparate voi?"}, {"c": "umorismo", "t": "C'è chi colleziona figurine, io colleziono giornate di motocross e graffi sul parafango. 😎 Voi cosa collezionate?"}, {"c": "umorismo", "t": "Ho capito di essere fissato col motocross il giorno in cui ho sognato la pista di notte. 😴 Vi è mai successo?"}, {"c": "esperienza", "t": "Certe domeniche ti rimettono in pace con il mondo, e oggi il motocross ha fatto proprio questo. 🙌 A voi capita uguale?"}, {"c": "esperienza", "t": "Terra perfetta, sole e gas aperto: da una giornata di motocross non potrei chiedere di meglio. ☀️ Qual è stata la vostra ultima giornata top?"}, {"c": "esperienza", "t": "C'è una pace strana che trovo solo quando salgo in moto, e oggi il motocross me l'ha ridata tutta. 🤍 Vi fa lo stesso effetto?"}, {"c": "esperienza", "t": "Dopo una settimana storta mi bastava staccare la testa e aprire il gas: il motocross cura sempre. 🏍️ A voi succede?"}, {"c": "esperienza", "t": "Profumo di terra bagnata e motore caldo: per me una giornata di motocross è anche questa roba qui. 🌧️ Meglio terra bagnata o asciutta secondo voi?"}, {"c": "esperienza", "t": "Mattino presto, pista libera e primo giro pulito: il motocross è un'altra cosa. 🌅 Anche voi vi alzate presto per questo?"}, {"c": "esperienza", "t": "Ci sono giornate in cui ogni curva ti viene da sé, e oggi il motocross era proprio così. 🔥 Le conoscete queste giornate?"}, {"c": "esperienza", "t": "Bastano poche ore di motocross per ricaricarmi più di una settimana di ferie. 🔋 La moto vi ricarica così?"}, {"c": "esperienza", "t": "Aria aperta, terra sotto le ruote e nessun pensiero: il motocross per me è libertà allo stato puro. 🤍 Cos'è per voi?"}, {"c": "esperienza", "t": "La domenica giusta inizia e finisce in pista, con un bel po' di motocross nel mezzo. 🏍️ Com'è la vostra domenica perfetta?"}, {"c": "esperienza", "t": "Niente telefono, niente pensieri, solo io e la moto: ecco perché il motocross mi salva ogni weekend. 📵 Anche voi staccate così?"}, {"c": "esperienza", "t": "Tornare in sella dopo tanto tempo ha un sapore che solo chi fa motocross conosce. 🤍 Vi manca anche a voi quando state fermi?"}, {"c": "esperienza", "t": "Il bello del motocross è che ti riporta bambino ogni singola volta, e oggi ci è riuscito di nuovo. 😄 A voi fa lo stesso effetto?"}, {"c": "esperienza", "t": "Una giornata di sole, la pista in condizioni e nessuna fretta: il motocross non ha bisogno di altro. ☀️ Cosa vi rende perfetta una giornata?"}, {"c": "esperienza", "t": "Salire in moto è il mio modo di rimettere tutto a posto, e oggi il motocross ha funzionato di nuovo. 🔋 Vi ci ritrovate?"}, {"c": "esperienza", "t": "C'è qualcosa di speciale nel rumore del motore che parte al mattino: il motocross comincia già lì. 🌅 Lo sentite anche voi?"}, {"c": "esperienza", "t": "Oggi la terra era una favola e ogni giro era meglio del precedente: il motocross nelle giornate così non ha prezzo. 🔥 Le avete vissute anche voi?"}, {"c": "esperienza", "t": "Mi bastano un casco, una moto e un po' di motocross per essere felice davvero. 🏍️ E a voi cosa basta?"}, {"c": "esperienza", "t": "Grato per giornate come questa, fatte di motocross, fango e tanto sorriso. 🙏 Qual è la giornata che vi portate nel cuore?"}];
+const FIXED = "📍 {TAG}\n@insta360 GO Ultra #goultra\n@honda_redmoto\n@bellhelmets\n@ride100percent\n@alpinestarsmx\n@renthal_moto\n@insta360motorcycling\n@insta360italia\n\n#motocross #mxlife #braap #crf250 #insta360";
+const PISTE = [{"n": "Castel Di Sangro - Colle Teste", "c": "Castel Di Sangro", "t": "@motoclub_castel_di_sangro__m_a"}, {"n": "Crossodromo Lo Scoiattolo", "c": "Lamezia Terme", "t": "@crossodromoloscoiattolo"}, {"n": "Baldasserona (Pino Serra)", "c": "Borgo Maggiore", "t": "@crossodromo_baldasserona"}, {"n": "Cà Noa", "c": "Pilastri di Bondeno", "t": "@mxpilastrimotoclubcanoa"}, {"n": "Carpi", "c": "Carpi", "t": "@arena_cross_carpi_"}, {"n": "Castel San Pietro - Calvanella", "c": "Liano - Castel San Pietro", "t": "@motocross_castelsanpietro"}, {"n": "Castellarano", "c": "Castellarano", "t": "@motoclub_castellarano"}, {"n": "Castelvetro - Motocross Park la Barbaiola", "c": "Castelvetro", "t": "@mx_park_la_barbaiola"}, {"n": "Faenza - Monte Coralli - 04 Park", "c": "Faenza", "t": "@04park_montecoralli"}, {"n": "G.Piola - Miscoso", "c": "Miscoso", "t": "@motoclubmiscoso"}, {"n": "Monte Michelone - Lesignano de Bagni", "c": "Lesignano Bagni", "t": "@motoclub_parma"}, {"n": "Park Cross Ferrara", "c": "Ferrara", "t": "@park_cross_ferrara_"}, {"n": "Piacenza - Motopark Piacenza", "c": "Piacenza", "t": "@motoparkpiacenza"}, {"n": "Pomposa", "c": "San Giuseppe Di Comacchio", "t": "@circuitodipomposa"}, {"n": "Predella - Salsomaggiore", "c": "Salsomaggiore", "t": "@predella_pista_motocross"}, {"n": "Ravenna - Tre ponti", "c": "Ravenna", "t": "@mxtrepontiravenna"}, {"n": "Savignano", "c": "Savignano S.P.", "t": "@xparksavignano"}, {"n": "Las Vegas Park", "c": "Aquileia", "t": "@lasvegasparkaquileia"}, {"n": "MX Rivolto - Codroipo", "c": "Codroipo", "t": "@rivolto_mx"}, {"n": "Wafna MotoPark", "c": "Ronchi dei Legionari", "t": "@mcwafna"}, {"n": "Fiano Romano", "c": "Fiano Romano", "t": "@crossodromodifianoromano"}, {"n": "Malagrotta", "c": "Malagrotta", "t": "@malagrottamxtrack_"}, {"n": "Arenzano", "c": "Arenzano", "t": "@moto_club_don_bosco_arenzano"}, {"n": "Beuzi Motocross Park", "c": "Taggia", "t": "@beuziteam"}, {"n": "Calvari - Roberto Parodi", "c": "San Colombano Certenoli", "t": "@motoclubcalvari"}, {"n": "Sassello", "c": "Sassello", "t": "@mcsassello"}, {"n": "Varazze - Andrea Timossi", "c": "Varazze", "t": "@sandacrosspark"}, {"n": "Bosisio", "c": "Bosisio Parini", "t": "@motoclubpariniofficial"}, {"n": "Ceriano Laghetto il Vallone", "c": "Ceriano Laghetto", "t": "@motocrossnewmacilvallone"}, {"n": "Covo - MXE.45", "c": "Covo", "t": "@mxe.45"}, {"n": "Cremona", "c": "Cremona", "t": "@motoclub_cremona"}, {"n": "Credera Rubbiano - Chieve", "c": "Credera Rubbiano", "t": "@motocrosschieve"}, {"n": "Darfo Boario Terme", "c": "Darfo Boario Terme", "t": "@_m.c.darfo.b.t_"}, {"n": "Dorno", "c": "Dorno", "t": "@motocross_dorno"}, {"n": "Galaello - Odolo", "c": "Gazzane Di Preseglie", "t": "@galaello"}, {"n": "Gorla Minore", "c": "Gorla Minore", "t": "@mxparkgorla"}, {"n": "Lodi", "c": "Lodi Vecchio", "t": "@lodicross"}, {"n": "Malpensa", "c": "Cardano Al Campo", "t": "@malpensa_mxtrack"}, {"n": "Mantova", "c": "Mantova", "t": "@motocross_mantova"}, {"n": "Max Land MX Raceway Park", "c": "Chignolo Po", "t": "@max_land_mx_park"}, {"n": "MX Park Medole", "c": "Medole", "t": "@motocross_medole"}, {"n": "Ottobiano Motorsport", "c": "Ottobiano", "t": "@ottobianomotorsport"}, {"n": "Rivarolo Mantovano", "c": "Rivarolo Mantovano", "t": "@mxrivarolo"}, {"n": "Schianno", "c": "Schianno", "t": "@motocross_schianno"}, {"n": "Serle", "c": "Serle", "t": "@mc_le_valli_serle"}, {"n": "Verolanuova", "c": "Verolanuova", "t": "@motoclubverolese"}, {"n": "Viadana - Ivo Mortini", "c": "Viadana", "t": "@racingpark_viadana"}, {"n": "Cingoli - Bartolomeo Tittoni", "c": "Cingoli", "t": "@motoclubcingoli"}, {"n": "Esanatoglia - Gina Libani Repetti", "c": "Esanatoglia", "t": "@motoclub_esanatoglia"}, {"n": "Fermignano", "c": "Fermignano", "t": "@fermignanese"}, {"n": "Bellinzago", "c": "Bellinzago Novarese", "t": "@mxbellinzago"}, {"n": "Boves", "c": "Boves", "t": "@bisaltamotorpark"}, {"n": "Casale Monferrato", "c": "Casale Monferrato", "t": "@mx_casale"}, {"n": "Cross Park 58 - Orbassano", "c": "Orbassano", "t": "@crossodromo_orbassano_racing"}, {"n": "Crossdromo Ondella", "c": "Armeno", "t": "@motocross_armeno"}, {"n": "Fara Novarese", "c": "Fara Novarese", "t": "@crossodromo_fara_novarese"}, {"n": "Gattinara", "c": "Gattinara", "t": "@pistamotocrossgattinara"}, {"n": "Maggiora", "c": "Maggiora", "t": "@maggiorapark"}, {"n": "MX Park Castagnole", "c": "Castagnole delle Lanze", "t": "@mxpark_castagnole_delle_lanze"}, {"n": "New Castle MX Park", "c": "Castelnuovo Bormida", "t": "@new_castle_mx_park"}, {"n": "Only Off Road", "c": "Gravellona Toce", "t": "@onlyoffroad_gravellona"}, {"n": "Rivarolo Canavese", "c": "Rivarolo Canavese", "t": "@motocross_rivarolo_canavese"}, {"n": "Trofarello", "c": "Trofarello", "t": "@trofarellocircuit"}, {"n": "Vercelli", "c": "Vercelli", "t": "@motocrossvercelli"}, {"n": "Ginosa", "c": "Ginosa", "t": "@massaframxpark"}, {"n": "Torchiarolo - Valesio", "c": "Torchiarolo", "t": "@asdvalesiosporttorchiarolo"}, {"n": "Baccalamananza", "c": "Capoterra", "t": "@baccalamanzamotocrosstrack"}, {"n": "Tramatza", "c": "Tramatza", "t": "@sardiniacircuit"}, {"n": "Cross Park - Gino Meli", "c": "Noto", "t": "@meli.park"}, {"n": "MX Simeto", "c": "Belpasso", "t": "@mxsimeto"}, {"n": "Marradi", "c": "Marradi", "t": "@marradi_mx"}, {"n": "Coredo - MXCoredo", "c": "Coredo (Predaia)", "t": "@mxcoredo"}, {"n": "Pietramurata - Ciclamino", "c": "Pietramurata", "t": "@mxtrentino"}, {"n": "Crespano Del Grappa - Rosset - Ardosa", "c": "Crespano Del Grappa", "t": "@mx.crespanoland"}, {"n": "Crossodromo al Boschetto", "c": "Gorgo al Monticano", "t": "@crossodromo_al_boschetto"}, {"n": "Fara Vicentino", "c": "Fara Vicentino", "t": "@mxparkfaravicentino"}, {"n": "Foresto", "c": "Foresto", "t": "@forestomxpark"}, {"n": "Lovolo", "c": "Lovolo", "t": "@motoclubalbettone"}, {"n": "Montagnana", "c": "Palù Di Montagnana", "t": "@mxparkmontagnana"}, {"n": "Monte Loffa", "c": "Sant'Anna d'Alfaedo", "t": "@valpocentermx_santannadalfaedo"}, {"n": "MX Giavera Park", "c": "Giavera del Montello", "t": "@mxgiaverapark"}, {"n": "Pincara - La Valle", "c": "Ca Bernarda di Pincara", "t": "@pistamotocrosspincara"}];
+const TOT = CAPS.length;
+const CAT = {emozione:"Emozione", autoironia:"Autoironia", umorismo:"Umorismo", esperienza:"Esperienza"};
+const CATCOL = {emozione:"var(--emozione)", autoironia:"var(--autoironia)", umorismo:"var(--umorismo)", esperienza:"var(--esperienza)"};
+
+const mem={};
+const store={
+  async get(k){
+    try{ if(window.storage){const r=await window.storage.get(k); return r&&r.value!=null?r.value:null;} }catch(e){}
+    try{ const v=localStorage.getItem(k); if(v!=null) return v; }catch(e){}
+    return (k in mem)?mem[k]:null;
+  },
+  async set(k,v){
+    try{ if(window.storage){await window.storage.set(k,v); return;} }catch(e){}
+    try{ localStorage.setItem(k,v); return; }catch(e){}
+    mem[k]=v;
+  }
+};
+
+let used=[];
+let saved=[{name:"Casale", tag:"@mx_casale"}];
+let history={};
+let sel=null;
+let cur=null;
+let curConsumed=false;
+
+const $=id=>document.getElementById(id);
+const norm=s=>s.toLowerCase().trim();
+
+async function init(){
+  const u=await store.get("mxcap_used"); if(u){try{used=JSON.parse(u)}catch(e){}}
+  const s=await store.get("mxcap_saved"); if(s){try{saved=JSON.parse(s)}catch(e){}}
+  const h=await store.get("mxcap_history"); if(h){try{history=JSON.parse(h)}catch(e){}}
+  $("tot").textContent="/"+TOT;
+  renderChips(); renderCounter();
+}
+
+function renderCounter(){
+  const free=TOT-used.length;
+  $("free").textContent=free;
+  $("bar").style.width=(free/TOT*100)+"%";
+}
+
+function renderChips(){
+  const c=$("chips"); c.innerHTML="";
+  saved.forEach((tr,i)=>{
+    const b=document.createElement("button");
+    b.className="chip"+(sel&&sel.tag===tr.tag?" active":"");
+    b.textContent=tr.name;
+    b.onclick=()=>{ selectTrack(tr); };
+    c.appendChild(b);
+  });
+  const add=document.createElement("button");
+  add.className="chip add"; add.textContent="+ Cerca pista";
+  add.onclick=()=>{ const w=$("searchWrap"); w.style.display=w.style.display==="none"?"block":"none"; if(w.style.display==="block"){$("q").focus();} };
+  c.appendChild(add);
+}
+
+$("q").addEventListener("input", e=>{
+  const q=norm(e.target.value);
+  const box=$("sugg");
+  if(q.length<2){ box.classList.remove("show"); box.innerHTML=""; return; }
+  const hits=PISTE.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q)).slice(0,8);
+  box.innerHTML="";
+  if(hits.length===0){ box.innerHTML='<div class="none">Nessuna pista trovata con questo nome.</div>'; box.classList.add("show"); return; }
+  hits.forEach(p=>{
+    const d=document.createElement("div");
+    d.innerHTML='<span class="pn">'+p.n+'</span><span class="pt">'+p.t+'</span><br><span class="pc">'+p.c+'</span>';
+    d.onclick=()=>{ selectTrack({name:p.n, tag:p.t}); $("q").value=""; box.classList.remove("show"); box.innerHTML=""; $("searchWrap").style.display="none"; };
+    box.appendChild(d);
+  });
+  box.classList.add("show");
+});
+
+function isSaved(tag){ return saved.some(t=>t.tag===tag); }
+
+function selectTrack(tr){
+  sel=tr; cur=null; curConsumed=false;
+  $("selName").textContent=tr.name;
+  const tagEl=$("selTag");
+  tagEl.textContent=tr.tag||"nessun tag";
+  tagEl.classList.toggle("nd", !tr.tag);
+  $("selbox").classList.add("show");
+  const sb=$("saveBtn");
+  if(isSaved(tr.tag)){ sb.textContent="Salvata"; sb.classList.add("done"); sb.disabled=true; }
+  else { sb.textContent="Salva"; sb.classList.remove("done"); sb.disabled=false; }
+  $("gen").disabled=false;
+  $("out").classList.remove("show");
+  renderChips(); renderHistory();
+  $("hint").textContent="";
+}
+
+$("saveBtn").onclick=()=>{
+  if(!sel||isSaved(sel.tag)) return;
+  saved.push({name:sel.name, tag:sel.tag});
+  store.set("mxcap_saved", JSON.stringify(saved));
+  $("saveBtn").textContent="Salvata"; $("saveBtn").classList.add("done"); $("saveBtn").disabled=true;
+  renderChips();
+};
+
+function availIdx(excl){
+  const a=[];
+  for(let i=0;i<TOT;i++) if(!used.includes(i) && i!==excl) a.push(i);
+  return a;
+}
+
+function propose(excl){
+  let a=availIdx(excl);
+  let wrapped=false;
+  if(a.length===0 && excl===undefined){ used=[]; store.set("mxcap_used",JSON.stringify(used)); renderCounter(); a=availIdx(); wrapped=true; }
+  if(a.length===0){ return {none:true}; }
+  const idx=a[Math.floor(Math.random()*a.length)];
+  return {idx, wrapped};
+}
+
+function showCaption(idx){
+  cur=idx; curConsumed=false;
+  const tag=sel.tag||"";
+  $("text").value=CAPS[idx].t+"\n\n"+FIXED.replace("{TAG}", tag);
+  const b=$("badge"); b.textContent=CAT[CAPS[idx].c]||CAPS[idx].c; b.style.background=CATCOL[CAPS[idx].c]||"var(--sub)";
+  $("out").classList.add("show");
+  $("copy").classList.remove("done"); $("copy").textContent="Copia";
+  $("skip").disabled=false;
+}
+
+$("gen").onclick=()=>{
+  if(!sel){ $("hint").textContent="Scegli prima una pista."; return; }
+  const r=propose();
+  if(r.none){ $("hint").textContent="Nessuna caption libera."; return; }
+  showCaption(r.idx);
+  $("hint").textContent=r.wrapped?"Giro completato: tutte usate, riparto da capo":"";
+};
+
+$("skip").onclick=()=>{
+  if(cur===null) return;
+  const r=propose(cur);
+  if(r.none){ $("hint").textContent="E' l'ultima caption libera: copiala o azzera il giro."; return; }
+  showCaption(r.idx);
+  $("hint").textContent="";
+};
+
+$("copy").onclick=async()=>{
+  if(cur===null) return;
+  const txt=$("text").value;
+  let ok=false;
+  try{ await navigator.clipboard.writeText(txt); ok=true; }catch(e){}
+  if(!ok){ try{ $("text").focus(); $("text").select(); ok=document.execCommand("copy"); }catch(e){} }
+  if(!ok){ $("hint").textContent="Tieni premuto sul testo per copiarlo a mano."; }
+  if(!curConsumed){
+    curConsumed=true;
+    used.push(cur); store.set("mxcap_used", JSON.stringify(used));
+    const k=sel.tag||sel.name;
+    if(!history[k]) history[k]=[];
+    history[k].unshift({i:cur, c:CAPS[cur].c, ts:Date.now()});
+    store.set("mxcap_history", JSON.stringify(history));
+    renderCounter(); renderHistory();
+  }
+  $("copy").classList.add("done"); $("copy").textContent="Copiata";
+  $("skip").disabled=true;
+};
+
+function renderHistory(){
+  if(!sel){ $("hist").classList.remove("show"); return; }
+  const k=sel.tag||sel.name;
+  const list=history[k]||[];
+  $("hist").classList.add("show");
+  $("histName").textContent=sel.name;
+  $("histN").textContent=list.length;
+  const counts={emozione:0,autoironia:0,umorismo:0,esperienza:0};
+  list.forEach(x=>{counts[x.c]=(counts[x.c]||0)+1;});
+  const t=$("tally"); t.innerHTML="";
+  Object.keys(CAT).forEach(c=>{
+    const s=document.createElement("span");
+    s.style.color=CATCOL[c]; s.textContent=CAT[c]+" "+(counts[c]||0);
+    t.appendChild(s);
+  });
+  const ul=$("histList"); ul.innerHTML="";
+  list.forEach(x=>{
+    const li=document.createElement("li");
+    const d=new Date(x.ts);
+    const dt=("0"+d.getDate()).slice(-2)+"/"+("0"+(d.getMonth()+1)).slice(-2)+" "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+    li.innerHTML='<div class="meta"><span class="dot" style="background:'+CATCOL[x.c]+'"></span><span class="cat">'+(CAT[x.c]||x.c)+'</span><span class="dt">'+dt+'</span></div><div class="tx">'+CAPS[x.i].t+'</div>';
+    ul.appendChild(li);
+  });
+}
+
+$("histTop").onclick=()=>{
+  const ul=$("histList"); const open=ul.classList.toggle("open");
+  $("histArrow").innerHTML=open?"nascondi &#9652;":"mostra &#9662;";
+};
+
+let resetArmed=false, resetTimer=null;
+$("reset").onclick=()=>{
+  if(!resetArmed){
+    resetArmed=true;
+    $("reset").textContent="Sicuro? Tocca ancora per azzerare tutto";
+    resetTimer=setTimeout(()=>{ resetArmed=false; $("reset").textContent="Azzera e ricomincia il giro"; }, 4000);
+    return;
+  }
+  clearTimeout(resetTimer); resetArmed=false;
+  used=[]; history={};
+  store.set("mxcap_used", JSON.stringify(used));
+  store.set("mxcap_history", JSON.stringify(history));
+  $("reset").textContent="Azzera e ricomincia il giro";
+  renderCounter(); renderHistory();
+  $("hint").textContent="Tutto azzerato: 71 caption libere e storico pulito.";
+};
+
+if("serviceWorker" in navigator){ window.addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+init();
+</script>
+</body>
+</html>
